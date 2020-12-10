@@ -8,18 +8,157 @@ output:
 
 ## Loading and preprocessing the data
 
+```{r libraries, echo=TRUE, message=FALSE, warning=FALSE}
+
+# Load the necessary libraries for analysis
+library(dplyr)
+library(ggplot2)
+library(skimr)
+library(tidyr)
+
+```
+
+We'll start by unzipping and loading the data. If the data is already unzipped it is just loaded.
+
+```{r echo=TRUE}
+
+if (!file.exists("activity.csv")) {
+  
+  unzip("activity.zip")
+  
+}
+
+df <- read.csv("activity.csv") %>%
+  mutate(date = as.Date(date, "%Y-%m-%d"))
+
+```
 
 
 ## What is mean total number of steps taken per day?
 
+For this part, we are ignoring the missing values in the dataset. Below is a histogram of the total number of steps taken every day.
 
+```{r total_steps}
+
+steps <- df %>% 
+  group_by(date) %>% 
+  summarise(total_steps = sum(steps, na.rm = TRUE), .groups = "drop")
+
+summary <- steps %>% 
+  summarise(Mean = mean(total_steps), Median = median(total_steps)) %>% 
+  pivot_longer(cols = everything(), names_to = "metric", values_to = "value")
+
+hist <- ggplot(steps, aes(total_steps)) + 
+  geom_histogram(bins = 30) + 
+  geom_vline(data = summary, mapping = aes(xintercept = value, color = metric), size = 1, show.legend = TRUE) + 
+  theme_bw() + 
+  theme(legend.position = "bottom") + 
+  xlab(NULL) + 
+  ylab(NULL) + 
+  ggtitle("Histogram of Total # of Steps in a Day")
+  
+hist
+
+```
+
+The mean and median of the total number of steps in a day is shown in the table below:
+
+```{r summary_table, echo=TRUE, warning=FALSE}
+
+summary
+
+```
 
 ## What is the average daily activity pattern?
 
+We plot the average number of steps for each 5-minute interval across all days.
 
+```{r time_plot, echo=TRUE}
+
+interval_mean <- df %>% 
+  group_by(interval) %>% 
+  summarise(mean_steps = mean(steps, na.rm = TRUE), .groups = "drop")
+
+max_interval_mean <- interval_mean %>% 
+  filter(mean_steps == max(mean_steps)) %>% 
+  separate(interval, sep = -2, into = c("hour", "minute"), remove = FALSE)
+
+ts <- ggplot(interval_mean, aes(interval, mean_steps)) + 
+  geom_line() + 
+  geom_point(data = max_interval_mean, size = 2, colour = "red") + 
+  theme_bw() + 
+  xlab("Interval") + 
+  ylab("Average number of steps across days") + 
+  ggtitle("Time Series of the average number of steps \nacross 5-min intervals")
+
+ts
+
+```
+
+The maximum number of average steps across all days and intervals is `r max_interval_mean$mean_steps`, which happened at `r max_interval_mean$hour` hours and `r max_interval_mean$minute` minutes.
 
 ## Imputing missing values
 
+```{r missing_val, echo=TRUE}
+
+missing <- df %>% 
+  count(missing = sum(is.na(steps))) %>% 
+  mutate(percentage = missing / n)
+
+
+```
+
+There are a number of days/intervals where we have missing values for the numbers of steps. Specifically there are `r missing$missing` values, which correspond to `r missing$percentage` % of the dataset. Instead of ignoring the observations that have missing values, we can try to impute the missing step data using the mean number of steps for each 5-min interval and each day of the week. If we assume that the individual has a daily schedule they stick to, then it can be a reasonable approximation.
+
+```{r na_impute, echo=TRUE}
+
+wd_int_impute <- df %>% 
+  mutate(wday = weekdays(date)) %>% 
+  filter(!is.na(steps)) %>% 
+  group_by(wday, interval) %>% 
+  summarise(mean_imp_steps = mean(steps), .groups = "drop") 
+
+# New data set with imputed information for missing steps
+
+imp_df <- df %>%
+  mutate(wday = weekdays(date)) %>%
+  left_join(wd_int_impute, by = c("wday", "interval")) %>%
+  mutate(steps = ifelse(is.na(steps), mean_imp_steps, steps))
+
+```
+
+
+```{r imputed_hist, echo=TRUE}
+
+imp_steps <- imp_df %>% 
+  group_by(date) %>% 
+  summarise(total_steps = sum(steps, na.rm = TRUE), .groups = "drop")
+
+imp_summary <- imp_steps %>% 
+  summarise(Mean = mean(total_steps), Median = median(total_steps)) %>% 
+  pivot_longer(cols = everything(), names_to = "metric", values_to = "value")
+
+imp_hist <- ggplot(imp_steps, aes(total_steps)) + 
+  geom_histogram() + 
+  geom_vline(data = imp_summary, mapping = aes(xintercept = value, color = metric), size = 1, show.legend = TRUE) + 
+  theme_bw() + 
+  theme(legend.position = "bottom") + 
+  xlab(NULL) + 
+  ylab(NULL) + 
+  ggtitle("Histogram of Total # of Steps in a Day")
+  
+imp_hist
+
+```
+
+The mean and the median after imputing the missing values are: 
+
+```{r imp_summary, echo=TRUE}
+
+imp_summary
+
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
