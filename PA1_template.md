@@ -175,7 +175,7 @@ imp_summary
 ## 2 Median 11015
 ```
 
-Using the mean of the number of steps for each interval and day of the week leads to an increase of 0% to the mean and 0% to the median.  
+Using the mean of the number of steps for each interval and day of the week leads to an increase of 15.6825326% to the mean and 5.964406% to the median.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
 

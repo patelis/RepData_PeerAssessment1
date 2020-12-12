@@ -159,7 +159,7 @@ imp_summary
 
 ```
 
-Using the mean of the number of steps for each interval and day of the week leads to an increase of `r (imp_summary$value[1] - imp_summary$value[1]) / imp_summary$value[1] * 100 `% to the mean and `r (imp_summary$value[2] - imp_summary$value[2]) / imp_summary$value[2] * 100`% to the median.  
+Using the mean of the number of steps for each interval and day of the week leads to an increase of `r (imp_summary$value[1] - summary$value[1]) / summary$value[1] * 100 `% to the mean and `r (imp_summary$value[2] - summary$value[2]) / summary$value[2] * 100`% to the median.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
