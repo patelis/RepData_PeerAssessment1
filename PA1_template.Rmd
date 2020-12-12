@@ -38,7 +38,7 @@ df <- read.csv("activity.csv") %>%
 
 For this part, we are ignoring the missing values in the dataset. Below is a histogram of the total number of steps taken every day.
 
-```{r total_steps}
+```{r total_steps, warning=FALSE}
 
 steps <- df %>% 
   group_by(date) %>% 
@@ -73,7 +73,7 @@ summary
 
 We plot the average number of steps for each 5-minute interval across all days.
 
-```{r time_plot, echo=TRUE}
+```{r time_plot, echo=TRUE, warning=FALSE}
 
 interval_mean <- df %>% 
   group_by(interval) %>% 
@@ -128,7 +128,7 @@ imp_df <- df %>%
 ```
 
 
-```{r imputed_hist, echo=TRUE}
+```{r imputed_hist, echo=TRUE, warning=FALSE}
 
 imp_steps <- imp_df %>% 
   group_by(date) %>% 
@@ -159,6 +159,28 @@ imp_summary
 
 ```
 
+Using the mean of the number of steps for each interval and day of the week leads to an increase of `r (imp_summary$value[1] - imp_summary$value[1]) / imp_summary$value[1] * 100 `% to the mean and `r (imp_summary$value[2] - imp_summary$value[2]) / imp_summary$value[2] * 100`% to the median.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+We already added the days of the week to our dataset, let's classify each entry on whether it falls on a weekend or a weekday and see if there are any differences.
+
+```{r weekdays, echo=TRUE, warning=FALSE}
+
+wd <- imp_df %>% 
+  mutate(wk = factor(ifelse(wday %in% c("Saturday", "Sunday"), "weekend", "weekday"))) %>% 
+  group_by(wk, interval) %>% 
+  summarise(mean_wk_steps = mean(steps), .groups = "drop")
+
+wd_lineplot <- ggplot(wd, aes(interval, mean_wk_steps)) + 
+  geom_line(size = 1, colour = "blue") + 
+  facet_wrap(vars(wk), nrow = 2) + 
+  labs(x = "Interval", y = "Number of steps") + 
+  theme_bw()
+
+wd_lineplot
+
+```
+
+We can observe some differences in the pattern of movement between weekdays and weekends. First, movement seems to start earlier in the morning on weekdays, usually at the same time as well. Movement peaks on weekdays around 9 am and is slightly higher compared to the relative intervals on the weekend. Furthermore, movement reduces after 10 am and is lower on the weekdays compared to the the weekend. Generally on the weekend there is more movement on average throughout the day and more balanced throughout the period between 9am and 8pm, without excessive peaks like we see on weekdays early in the morning.  
 
